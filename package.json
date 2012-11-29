@@ -22,5 +22,12 @@
   ],
   "author": "Andrew Kelley",
   "license": "BSD",
-  "readmeFilename": "README.md"
+  "readmeFilename": "README.md",
+  "devDependencies": {
+    "mocha": "~1.7.2"
+  },
+  "dependencies": {
+    "batch": "~0.2.1",
+    "node-uuid": "~1.4.0"
+  }
 }
