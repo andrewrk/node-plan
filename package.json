@@ -1,0 +1,26 @@
+{
+  "name": "node-plan",
+  "version": "0.0.0",
+  "description": "execute a complicated dependency graph of tasks with smooth progress events",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/superjoe30/node-planner"
+  },
+  "keywords": [
+    "dependency",
+    "graph",
+    "async",
+    "plan",
+    "planner",
+    "emit",
+    "smooth",
+    "progress"
+  ],
+  "author": "Andrew Kelley",
+  "license": "BSD",
+  "readmeFilename": "README.md"
+}
