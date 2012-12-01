@@ -2,7 +2,7 @@
   "name": "plan",
   "version": "0.0.0",
   "description": "execute a complicated dependency graph of tasks with smooth progress events",
-  "main": "index.js",
+  "main": "lib/plan.js",
   "scripts": {
     "test": "mocha"
   },

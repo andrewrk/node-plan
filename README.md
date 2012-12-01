@@ -61,11 +61,23 @@ plan.on('update', function(task) {
 plan.on('end', function() {
   console.log("done");
 });
-plan.start();
+plan.exec({
+  s3_url: "/foo/file"
+});
 ```
 
 ## Documentation
 
 ### Creating a Task
+
+#### context
+
+#### settings
+
+#### emitting update events
+
+#### emitting progress events
+
+#### cpu_bound
 
 ### Executing a Plan
