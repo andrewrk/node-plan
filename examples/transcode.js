@@ -8,7 +8,7 @@ module.exports = TranscodeTask = (function(superclass){
     var ref$;
     superclass.apply(this, arguments);
     this.cpu_bound = true;
-    ref$ = this.info;
+    ref$ = this.exports;
     ref$.src = {
       duration: null,
       bitRate: null,
@@ -39,16 +39,16 @@ module.exports = TranscodeTask = (function(superclass){
       this$.end(err);
     });
     transcode.on('progress', function(amount_done, amount_total){
-      this$.info.amount_done = amount_done;
-      this$.info.amount_total = amount_total;
+      this$.exports.amount_done = amount_done;
+      this$.exports.amount_total = amount_total;
       this$.emit('progress');
     });
-    transcode.on('src', function(info){
-      this$.info.src = info;
+    transcode.on('src', function(exports){
+      this$.exports.src = exports;
       this$.emit('update');
     });
-    transcode.on('dest', function(info){
-      this$.info.dest = info;
+    transcode.on('dest', function(exports){
+      this$.exports.dest = exports;
       this$.emit('update');
     });
     transcode.on('end', function(){

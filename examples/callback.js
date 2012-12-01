@@ -12,14 +12,14 @@ module.exports = CallbackTask = (function(superclass){
   prototype.start = function(){
     var ref$, data, opts, http_module, req, this$ = this;
     superclass.prototype.start.apply(this, arguments);
-    this.info.url = (ref$ = this.context).callback_url, delete ref$.callback_url;
-    if (this.info.url == null) {
+    this.exports.url = (ref$ = this.context).callback_url, delete ref$.callback_url;
+    if (this.exports.url == null) {
       this.end(new Error("no callback url in context"));
       return;
     }
     this.emit('update');
     data = JSON.stringify(this.context.job);
-    opts = (ref$ = parseUrl(this.info.url), ref$.method = 'POST', ref$.agent = false, ref$.headers = {
+    opts = (ref$ = parseUrl(this.exports.url), ref$.method = 'POST', ref$.agent = false, ref$.headers = {
       'content-length': data.length,
       'content-type': 'application/json'
     }, ref$);
@@ -27,7 +27,7 @@ module.exports = CallbackTask = (function(superclass){
     req = http_module.request(opts, function(resp){
       resp.on('error', function(err){
         var my_err;
-        my_err = new Error("error calling callback at " + this$.info.url + ": " + err.stack);
+        my_err = new Error("error calling callback at " + this$.exports.url + ": " + err.stack);
         my_err.internal = err;
         this$.end(my_err);
       });
@@ -36,7 +36,7 @@ module.exports = CallbackTask = (function(superclass){
         if (resp.statusCode === 200) {
           this$.end();
         } else {
-          my_err = new Error("callback returned http code " + resp.statusCode + " from " + this$.info.url);
+          my_err = new Error("callback returned http code " + resp.statusCode + " from " + this$.exports.url);
           my_err.internal = err;
           this$.end(my_err);
         }
@@ -44,7 +44,7 @@ module.exports = CallbackTask = (function(superclass){
     });
     req.on('error', function(err){
       var my_err;
-      my_err = new Error("unable to call callback at " + this$.info.url + ": " + err.stack);
+      my_err = new Error("unable to call callback at " + this$.exports.url + ": " + err.stack);
       my_err.internal = err;
       this$.end(my_err);
     });

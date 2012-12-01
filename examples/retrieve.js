@@ -16,7 +16,7 @@ module.exports = RetrieveTask = (function(superclass){
       secret: this.settings.s3_secret,
       bucket: this.settings.s3_bucket
     });
-    this.info.bucket = this.settings.s3_bucket;
+    this.exports.bucket = this.settings.s3_bucket;
     this.emit('update');
     s3_url = (ref$ = this.context).s3_url, delete ref$.s3_url;
     ext = path.extname(s3_url);
@@ -28,8 +28,8 @@ module.exports = RetrieveTask = (function(superclass){
       this$.end(err);
     });
     downloader.on('progress', function(amount_done, amount_total){
-      this$.info.amount_done = amount_done;
-      this$.info.amount_total = amount_total;
+      this$.exports.amount_done = amount_done;
+      this$.exports.amount_total = amount_total;
       this$.emit('progress');
     });
     downloader.on('end', function(){

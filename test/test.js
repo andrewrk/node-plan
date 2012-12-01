@@ -3,7 +3,8 @@ var Plan = require('../')
 
 var smoothTask = {
   start: function(done) {
-    this.exports.amountTotal = 30;
+    var self = this;
+    self.exports.amountTotal = 30;
     var interval = setInterval(function() {
       self.exports.amountDone += 1;
       if (self.exports.amountDone === 30) {
@@ -82,6 +83,9 @@ describe("plan", function() {
       done();
     });
     plan.start();
+  });
+  it("has access to task settings", function(done) {
+    assert.fail();
   });
   it("error task should return an error", function(done) {
     assert.fail();
