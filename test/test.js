@@ -1,7 +1,7 @@
 var Plan = require('../')
   , assert = require('assert');
 
-var smoothTask = {
+var SmoothTask = {
   start: function(done) {
     var self = this;
     self.exports.amountTotal = 30;
@@ -9,6 +9,7 @@ var smoothTask = {
       self.exports.amountDone += 1;
       if (self.exports.amountDone === 30) {
         clearInterval(interval);
+        self.exports.complete = true;
         done();
       } else {
         self.emit('progress');
@@ -17,16 +18,13 @@ var smoothTask = {
   }
 };
 
-var fastTask = {
+var FastTask = {
   exports: {
     foo: {
       bar: "abcd"
     },
     derp: true,
     amountTotal: 2,
-  },
-  options: {
-    blah: true
   },
   start: function(done) {
     var self = this;
@@ -36,13 +34,14 @@ var fastTask = {
       self.amountDone = 1;
       self.emit('progress');
       setTimeout(function() {
+        self.exports.complete = true;
         done();
       });
     }, 10);
   },
 };
 
-var syncTask = {
+var SyncTask = {
   start: function(done) {
     this.context.foo = "foo2";
     this.context.tails = this.options.tails;
@@ -51,7 +50,7 @@ var syncTask = {
   }
 };
 
-var errorTask = {
+var ErrorTask = {
   exports: {
     amountTotal: 20
   },
@@ -62,16 +61,19 @@ var errorTask = {
       self.emit('progress');
       if (self.exports.amountDone === 10) {
         clearInterval(interval);
-        done(new Error("errorTask - this error is expected"));
+        var err = new Error("ErrorTask - this error is expected");
+        err.isErrorTask = true;
+        done(err);
       }
     }, 10);
   }
 };
 
 describe("plan", function() {
+  var planId = 0;
   it("a single task", function(done) {
-    var plan = new Plan();
-    var task = Plan.createTask(smoothTask);
+    var plan = new Plan(planId++);
+    var task = Plan.createTask(SmoothTask);
     var info = task.exports;
     plan.addTask(task);
     plan.on('error', done);
@@ -98,7 +100,7 @@ describe("plan", function() {
   });
   it("has access to task options, context, and exports", function(done) {
     var plan = new Plan();
-    var task = Plan.createTask(syncTask, {sonic: "rock", tails: "ice"});
+    var task = Plan.createTask(SyncTask, {sonic: "rock", tails: "ice"});
     var info = task.exports;
     plan.addTask(task);
     plan.on('error', done);
@@ -129,7 +131,24 @@ describe("plan", function() {
     plan.start({foo: "hi"});
   });
   it("emits errors", function(done) {
-    assert.fail();
+    var plan = new Plan();
+    var errorTask = Plan.createTask(ErrorTask);
+    var fastTask = Plan.createTask(FastTask);
+    var smoothTask = Plan.createTask(SmoothTask);
+    plan.addTask(errorTask);
+    plan.addDependency(errorTask, fastTask);
+    plan.addDependency(fastTask, smoothTask);
+    plan.on('error', function(err) {
+      assert.ok(err.isErrorTask);
+      assert.strictEqual(fastTask.exports.derp, "hi");
+      assert.strictEqual(fastTask.exports.complete, true);
+      assert.strictEqual(smoothTask.exports.complete, true);
+      done();
+    });
+    plan.on('end', function() {
+      assert.fail("not supposed to reach end");
+    });
+    plan.start();
   });
   it("2 sequential tasks", function(done) {
     // context should be passed
