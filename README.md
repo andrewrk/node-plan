@@ -21,7 +21,7 @@ var s3DowloadTask = {
       secret: "s3 secret",
       bucket: "s3 bucket"
     });
-    this.info.bucket = this.settings.s3_bucket;
+    this.info.bucket = this.options.s3_bucket;
     this.emit('update');
     var s3_url = this.context.s3_url;
     delete this.context.s3_url;
@@ -72,7 +72,7 @@ plan.exec({
 
 #### context
 
-#### settings
+#### options
 
 #### emitting update events
 

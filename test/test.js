@@ -25,6 +25,9 @@ var fastTask = {
     derp: true,
     amountTotal: 2,
   },
+  options: {
+    blah: true
+  },
   start: function(done) {
     var self = this;
     self.exports.derp = "hi";
@@ -37,6 +40,15 @@ var fastTask = {
       });
     }, 10);
   },
+};
+
+var syncTask = {
+  start: function(done) {
+    this.context.foo = "foo2";
+    this.context.tails = this.options.tails;
+    this.exports.sonic = this.options.sonic || "zebra";
+    done();
+  }
 };
 
 var errorTask = {
@@ -57,7 +69,7 @@ var errorTask = {
 };
 
 describe("plan", function() {
-  it("a plan which is a single task", function(done) {
+  it("a single task", function(done) {
     var plan = new Plan();
     var task = Plan.createTask(smoothTask);
     var info = task.exports;
@@ -84,17 +96,42 @@ describe("plan", function() {
     });
     plan.start();
   });
-  it("has access to task settings", function(done) {
+  it("has access to task options, context, and exports", function(done) {
+    var plan = new Plan();
+    var task = Plan.createTask(syncTask, {sonic: "rock", tails: "ice"});
+    var info = task.exports;
+    plan.addTask(task);
+    plan.on('error', done);
+    var progress = 0;
+    var progressEventCount = 0;
+    plan.on('progress', function(amountDone, amountTotal) {
+      var newProgress = amountDone / amountTotal;
+      assert(newProgress >= progress, "old progress: " + progress + ", new progress: " + newProgress + ", amountDone: " + amountDone + ", amountTotal: " + amountTotal);
+      progressEventCount += 1;
+      progress = newProgress;
+    });
+    var updateEventCount = 0;
+    plan.on('update', function(updatedTask) {
+      updateEventCount += 1;
+      assert.strictEqual(updatedTask, task);
+      assert.strictEqual(updatedTask.exports, info);
+    });
+    plan.on('end', function(results) {
+      assert.strictEqual(results.foo, "foo2");
+      assert.strictEqual(results.tails, "ice");
+      assert.strictEqual(info.sonic, "rock");
+      assert.strictEqual(info.amountDone, 1);
+      assert.strictEqual(info.amountTotal, 1);
+      assert.strictEqual(progressEventCount, 1)
+      assert.strictEqual(updateEventCount, 2);
+      done();
+    });
+    plan.start({foo: "hi"});
+  });
+  it("emits errors", function(done) {
     assert.fail();
   });
-  it("error task should return an error", function(done) {
-    assert.fail();
-  });
-  it("running a single task", function(done) {
-    // settings should be observed
-    assert.fail();
-  });
-  it("running 2 sequential tasks", function(done) {
+  it("2 sequential tasks", function(done) {
     // context should be passed
     assert.fail();
   });
@@ -111,7 +148,7 @@ describe("plan", function() {
   it("heuristics take plan id into account", function(done) {
     assert.fail();
   });
-  it("limits cpu_bound tasks to 1 per processor core", function(done) {
+  it("limits cpu bound tasks to one cpu core", function(done) {
     assert.fail();
   });
 });
