@@ -22,7 +22,9 @@
   ],
   "author": "Andrew Kelley",
   "license": "BSD",
-  "readmeFilename": "README.md",
+  "engines": {
+    "node": ">=0.8.0"
+  },
   "devDependencies": {
     "mocha": "~1.7.2"
   },
