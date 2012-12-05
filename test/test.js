@@ -236,6 +236,7 @@ describe("plan", function() {
       return Math.round(n * 100) / 100;
     }
     var firstSumDiff;
+    var firstMaxDiff;
     plan.on('progress', function(amountDone, amountTotal) {
       if (! done1000 && plan._task1000.exports.amountDone === 1000) {
         done1000 = true;
@@ -262,7 +263,12 @@ describe("plan", function() {
       plan.on('error', done);
       var done1000 = false;
       var done3000 = false;
-      plan.on('progress', function(amountDone, amountTotal) {
+      var progress = 0;
+      var progressEverWentDown = false;
+      plan.on('progress', function(amountDone) {
+        var newProgress = amountDone;
+        if (newProgress < progress) progressEverWentDown = true;
+        progress = newProgress;
         if (! done1000 && plan._task1000.exports.amountDone === 1000) {
           done1000 = true;
           debugOutput += "done 1000\n";
@@ -287,6 +293,10 @@ describe("plan", function() {
           " max diff " + round(maxDiff) +
           " sum diff " + round(sumDiff) +
           "\n";
+        if (progressEverWentDown) {
+          console.log(debugOutput);
+          throw new Error("2nd time progress went down");
+        }
         if (sumDiff > firstSumDiff) {
           console.log(debugOutput);
           throw new Error("2nd time was overall less accurate than first");
@@ -298,6 +308,7 @@ describe("plan", function() {
         done();
       });
       firstSumDiff = sumDiff;
+      firstMaxDiff = maxDiff;
       debugOutput += " min diff " + round(minDiff) +
         " max diff " + round(maxDiff) +
         " sum diff " + round(sumDiff) +
@@ -313,7 +324,7 @@ describe("plan", function() {
       var plan = new Plan("test-smooth-progress");
       var task1000 = Plan.createTask(DelayTask, "delay1000", {timeout: 1000});
       var task3000 = Plan.createTask(DelayTask, "delay3000", {timeout: 3000});
-      var fastTask = Plan.createTask(FastTask);
+      var fastTask = Plan.createTask(FastTask, "fastTask");
       plan.addTask(fastTask);
       plan.addDependency(fastTask, task3000);
       plan.addDependency(task3000, task1000);
