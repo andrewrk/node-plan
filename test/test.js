@@ -69,10 +69,23 @@ var ErrorTask = {
   }
 };
 
+var SetNumberTask = {
+  start: function(done) {
+    this.context[this.options.field] = this.options.value;
+    done();
+  }
+};
+
+var SumTask = {
+  start: function(done) {
+    this.context.result = this.context.a + this.context.b;
+    done();
+  }
+};
+
 describe("plan", function() {
-  var planId = 0;
   it("a single task", function(done) {
-    var plan = new Plan(planId++);
+    var plan = new Plan("aoeuaoeu");
     var task = Plan.createTask(SmoothTask);
     var info = task.exports;
     plan.addTask(task);
@@ -150,21 +163,39 @@ describe("plan", function() {
     });
     plan.start();
   });
-  it("2 sequential tasks", function(done) {
-    // context should be passed
-    assert.fail();
+  it("passes context sequentially", function(done) {
+    var plan = new Plan();
+    var syncTask = Plan.createTask(SyncTask);
+    var fastTask = Plan.createTask(FastTask);
+    var smoothTask = Plan.createTask(SmoothTask);
+    plan.addTask(syncTask);
+    plan.addDependency(syncTask, fastTask);
+    plan.addDependency(fastTask, smoothTask);
+    plan.on('error', done);
+    plan.on('end', function(results) {
+      assert.strictEqual(results.eggman, "no");
+      done();
+    });
+    plan.start({eggman: "no"});
   });
   it("a task with 2 dependencies", function(done) {
-    // both dependencies should be complete
-    assert.fail();
+    var plan = new Plan();
+    var setTask1 = Plan.createTask(SetNumberTask, {field: "a", value: 99});
+    var setTask2 = Plan.createTask(SetNumberTask, {field: "b", value: 11});
+    var sumTask = Plan.createTask(SumTask);
+    plan.addTask(sumTask);
+    plan.addDependency(sumTask, setTask1);
+    plan.addDependency(sumTask, setTask2);
+    plan.on('end', function(results) {
+      assert.strictEqual(results.result, 110);
+      done();
+    });
+    plan.start();
   });
-  it("smooth progress on 2nd try with tasks that do not emit progress", function(done) {
+  it("has smooth progress on 2nd try with tasks that do not emit progress", function(done) {
     assert.fail();
   });
   it("emits progress even when no tasks are emitting progress", function(done) {
-    assert.fail();
-  });
-  it("heuristics take plan id into account", function(done) {
     assert.fail();
   });
   it("limits cpu bound tasks to one cpu core", function(done) {
