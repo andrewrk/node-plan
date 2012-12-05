@@ -18,6 +18,19 @@ var SmoothTask = {
   }
 };
 
+var DelayTask = {
+  start: function(done) {
+    var self = this;
+    setTimeout(function() {
+      self.exports.amountTotal = self.options.timeout;
+      self.emit('progress');
+      setTimeout(function() {
+        done();
+      }, self.options.timeout);
+    }, 10);
+  }
+};
+
 var FastTask = {
   exports: {
     foo: {
@@ -113,7 +126,7 @@ describe("plan", function() {
   });
   it("has access to task options, context, and exports", function(done) {
     var plan = new Plan();
-    var task = Plan.createTask(SyncTask, {sonic: "rock", tails: "ice"});
+    var task = Plan.createTask(SyncTask, "sync", {sonic: "rock", tails: "ice"});
     var info = task.exports;
     plan.addTask(task);
     plan.on('error', done);
@@ -180,8 +193,8 @@ describe("plan", function() {
   });
   it("a task with 2 dependencies", function(done) {
     var plan = new Plan();
-    var setTask1 = Plan.createTask(SetNumberTask, {field: "a", value: 99});
-    var setTask2 = Plan.createTask(SetNumberTask, {field: "b", value: 11});
+    var setTask1 = Plan.createTask(SetNumberTask, "set1", {field: "a", value: 99});
+    var setTask2 = Plan.createTask(SetNumberTask, "set2", {field: "b", value: 11});
     var sumTask = Plan.createTask(SumTask);
     plan.addTask(sumTask);
     plan.addDependency(sumTask, setTask1);
@@ -193,10 +206,101 @@ describe("plan", function() {
     plan.start();
   });
   it("has smooth progress on 2nd try with tasks that do not emit progress", function(done) {
-    assert.fail();
-  });
-  it("emits progress even when no tasks are emitting progress", function(done) {
-    assert.fail();
+    this.timeout(12000);
+    var plan = createPlan();
+    plan.on('error', done);
+    var done1000 = false;
+    var done3000 = false;
+    var expectedTimePassed = 4033;
+    var debugOutput = "";
+    var minDiff = 1, maxDiff = 0, sumDiff = 0;
+    function round(n) {
+      return Math.round(n * 100) / 100;
+    }
+    var firstSumDiff;
+    plan.on('progress', function(amountDone, amountTotal) {
+      if (! done1000 && plan._task1000.exports.amountDone === 1000) {
+        done1000 = true;
+        debugOutput += "done 1000\n"
+      }
+      if (! done3000 && plan._task3000.exports.amountDone === 3000) {
+        done3000 = true;
+        debugOutput += "done 3000\n"
+      }
+      var timePassed = (new Date()).getTime() - plan._task1000.exports.startDate.getTime();
+      var expectedPercent = timePassed / expectedTimePassed;
+      var diff = Math.abs(expectedPercent - amountDone);
+      if (diff < minDiff) minDiff = diff;
+      if (diff > maxDiff) maxDiff = diff;
+      sumDiff += diff;
+      debugOutput += "expected " + round(expectedPercent) +
+        " actual " + round(amountDone) +
+        " diff " + round(diff) +
+        "\n";
+    });
+    plan.on('end', function() {
+      expectedTimePassed = (new Date()).getTime() - plan._task1000.exports.startDate.getTime();
+      plan = createPlan();
+      plan.on('error', done);
+      var done1000 = false;
+      var done3000 = false;
+      plan.on('progress', function(amountDone, amountTotal) {
+        if (! done1000 && plan._task1000.exports.amountDone === 1000) {
+          done1000 = true;
+          debugOutput += "done 1000\n";
+        }
+        if (! done3000 && plan._task3000.exports.amountDone === 3000) {
+          done3000 = true;
+          debugOutput += "done 3000\n";
+        }
+        var timePassed = (new Date()).getTime() - plan._task1000.exports.startDate.getTime();
+        var expectedPercent = timePassed / expectedTimePassed;
+        var diff = Math.abs(expectedPercent - amountDone);
+        if (diff < minDiff) minDiff = diff;
+        if (diff > maxDiff) maxDiff = diff;
+        sumDiff += diff;
+        debugOutput += "expected " + round(expectedPercent) +
+          " actual " + round(amountDone) +
+          " diff " + round(diff) +
+          "\n";
+      });
+      plan.on('end', function() {
+        debugOutput += "min diff " + round(minDiff) +
+          " max diff " + round(maxDiff) +
+          " sum diff " + round(sumDiff) +
+          "\n";
+        if (sumDiff > firstSumDiff) {
+          console.log(debugOutput);
+          throw new Error("2nd time was less accurate than first");
+        }
+        console.log(debugOutput);
+        done();
+      });
+      firstSumDiff = sumDiff;
+      debugOutput += " min diff " + round(minDiff) +
+        " max diff " + round(maxDiff) +
+        " sum diff " + round(sumDiff) +
+        "\n";
+      minDiff = 1;
+      maxDiff = 0;
+      sumDiff = 0;
+      debugOutput += "\nnew plan\n";
+      plan.start();
+    });
+    plan.start();
+    function createPlan() {
+      var plan = new Plan("test-smooth-progress");
+      var task1000 = Plan.createTask(DelayTask, "delay1000", {timeout: 1000});
+      var task3000 = Plan.createTask(DelayTask, "delay3000", {timeout: 3000});
+      var fastTask = Plan.createTask(FastTask);
+      plan.addTask(fastTask);
+      plan.addDependency(fastTask, task3000);
+      plan.addDependency(task3000, task1000);
+      plan._task1000 = task1000;
+      plan._task3000 = task3000;
+      plan._fastTask = fastTask;
+      return plan;
+    }
   });
   it("limits cpu bound tasks to one cpu core", function(done) {
     assert.fail();
