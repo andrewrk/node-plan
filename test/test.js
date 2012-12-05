@@ -96,6 +96,24 @@ var SumTask = {
   }
 };
 
+var CpuTask = {
+  cpuBound: true,
+  start: function(done) {
+    var self = this;
+    self.exports.amountTotal = 100;
+    var interval = setInterval(function() {
+      self.exports.amountDone += 1;
+      if (self.exports.amountDone === 100) {
+        clearInterval(interval);
+        self.exports.complete = true;
+        done();
+      } else {
+        self.emit('progress');
+      }
+    }, 10);
+  }
+};
+
 describe("plan", function() {
   it("a single task", function(done) {
     var plan = new Plan("aoeuaoeu");
@@ -271,9 +289,12 @@ describe("plan", function() {
           "\n";
         if (sumDiff > firstSumDiff) {
           console.log(debugOutput);
-          throw new Error("2nd time was less accurate than first");
+          throw new Error("2nd time was overall less accurate than first");
         }
-        console.log(debugOutput);
+        if (maxDiff > firstMaxDiff) {
+          console.log(debugOutput);
+          throw new Error("2nd time worst case progress was worse than first");
+        }
         done();
       });
       firstSumDiff = sumDiff;
@@ -302,7 +323,46 @@ describe("plan", function() {
       return plan;
     }
   });
-  it("limits cpu bound tasks to one cpu core", function(done) {
-    assert.fail();
+  it("limits cpu bound tasks to one per worker count", function(done) {
+    this.timeout(4000);
+    Plan.setWorkerCap(2);
+    var task1 = Plan.createTask(CpuTask);
+    var task2 = Plan.createTask(CpuTask);
+    var task3 = Plan.createTask(CpuTask);
+    var fastTask = Plan.createTask(FastTask);
+    var plan = new Plan();
+    plan.addTask(fastTask);
+    plan.addTask(task1);
+    plan.addTask(task2);
+    plan.addTask(task3);
+    var success = false;
+    var debugOutput = "";
+    plan.on('progress', function(amountDone) {
+      var cpuTaskProcessingCount = 0;
+      if (task1.exports.state === 'processing') cpuTaskProcessingCount += 1;
+      if (task2.exports.state === 'processing') cpuTaskProcessingCount += 1;
+      if (task3.exports.state === 'processing') cpuTaskProcessingCount += 1;
+      if (cpuTaskProcessingCount === 2 &&
+        fastTask.exports.state === 'complete' &&
+        (task1.exports.state === 'queued' || task2.exports.state === 'queued' || task3.exports.state === 'queued'))
+      {
+        success = true;
+      } else {
+        debugOutput += "fastTask " + fastTask.exports.state +
+          " task1 " + task1.exports.state +
+          " task2 " + task2.exports.state +
+          " task3 " + task3.exports.state +
+          "\n";
+      }
+    });
+    plan.on('error', done);
+    plan.on('end', function() {
+      if (! success) {
+        console.log(debugOutput);
+        throw new Error("failed to limit cpu bound tasks");
+      }
+      done();
+    });
+    plan.start();
   });
 });
