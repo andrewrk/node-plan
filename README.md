@@ -1,6 +1,6 @@
-# node-plan
+[![Build Status](https://secure.travis-ci.org/superjoe30/node-plan.png?branch=master)](https://travis-ci.org/superjoe30/node-plan)
 
-WORK IN PROGRESS. NOT READY FOR USE.
+# node-plan
 
 Execute a complicated dependency graph of tasks with smooth progress events.
 
@@ -8,44 +8,12 @@ Execute a complicated dependency graph of tasks with smooth progress events.
 
 ### Create tasks
 
-```js
-
-var s3 = require('s3')
-  , path = require('path');
-
-var s3DowloadTask = {
-  start: function(done) {
-    var self = this;
-    var client = s3.createClient({
-      key: "s3 key",
-      secret: "s3 secret",
-      bucket: "s3 bucket"
-    });
-    this.info.bucket = this.options.s3_bucket;
-    this.emit('update');
-    var s3_url = this.context.s3_url;
-    delete this.context.s3_url;
-    var ext = path.extname(s3_url);
-    this.context.temp_path = this.context.makeTemp({
-      suffix: ext
-    });
-    var downloader = client.download(s3_url, this.context.temp_path);
-    downloader.on('error', done);
-    downloader.on('progress', function(amount_done, amount_total){
-      self.info.amount_done = amount_done;
-      self.info.amount_total = amount_total;
-      self.emit('progress');
-    });
-    downloader.on('end', done);
-  },
-};
-```
+See `examples/`.
 
 ### Execute a plan
 
 ```js
-var Plan = require('planner').Plan;
-
+var Plan = require('plan');
 var plan = new Plan();
 plan.addTask(task);
 plan.addDependency(task, task2);
@@ -61,9 +29,8 @@ plan.on('update', function(task) {
 plan.on('end', function() {
   console.log("done");
 });
-plan.exec({
-  s3_url: "/foo/file"
-});
+context = {blah: "foo"};
+plan.start(context);
 ```
 
 ## Documentation
@@ -78,6 +45,6 @@ plan.exec({
 
 #### emitting progress events
 
-#### cpu_bound
+#### CPU Bound Tasks
 
 ### Executing a Plan
