@@ -14,6 +14,7 @@ Here are some examples:
  * [callback](https://github.com/superjoe30/node-plan-callback)
  * [s3-upload](https://github.com/superjoe30/node-plan-s3-upload)
  * [s3-download](https://github.com/superjoe30/node-plan-s3-download)
+ * [thumbnail](https://github.com/superjoe30/node-plan-thumbnail)
 
 ### Execute a plan
 
