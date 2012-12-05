@@ -11,6 +11,7 @@ Execute a complicated dependency graph of tasks with smooth progress events.
 Here are some examples:
 
  * [waveform](https://github.com/superjoe30/node-plan-waveform)
+ * [callback](https://github.com/superjoe30/node-plan-callback)
 
 ### Execute a plan
 
