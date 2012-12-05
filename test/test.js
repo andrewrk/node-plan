@@ -264,10 +264,11 @@ describe("plan", function() {
       var done1000 = false;
       var done3000 = false;
       var progress = 0;
-      var progressEverWentDown = false;
+      var worstProgressDownAmt = 0;
       plan.on('progress', function(amountDone) {
         var newProgress = amountDone;
-        if (newProgress < progress) progressEverWentDown = true;
+        var thisProgressDownAmt = progress - newProgress;
+        if (thisProgressDownAmt > worstProgressDownAmt) worstProgressDownAmt = thisProgressDownAmt
         progress = newProgress;
         if (! done1000 && plan._task1000.exports.amountDone === 1000) {
           done1000 = true;
@@ -293,9 +294,9 @@ describe("plan", function() {
           " max diff " + round(maxDiff) +
           " sum diff " + round(sumDiff) +
           "\n";
-        if (progressEverWentDown) {
+        if (worstProgressDownAmt > 0.01) {
           console.log(debugOutput);
-          throw new Error("2nd time progress went down");
+          throw new Error("2nd time progress went down by more than 0.01");
         }
         if (sumDiff > firstSumDiff) {
           console.log(debugOutput);
