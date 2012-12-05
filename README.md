@@ -12,6 +12,7 @@ Here are some examples:
 
  * [waveform](https://github.com/superjoe30/node-plan-waveform)
  * [callback](https://github.com/superjoe30/node-plan-callback)
+ * [s3-upload](https://github.com/superjoe30/node-plan-s3-upload)
 
 ### Execute a plan
 
