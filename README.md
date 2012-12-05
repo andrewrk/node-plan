@@ -8,7 +8,9 @@ Execute a complicated dependency graph of tasks with smooth progress events.
 
 ### Create tasks
 
-See `examples/`.
+Here are some examples:
+
+ * [waveform](https://github.com/superjoe30/node-plan-waveform)
 
 ### Execute a plan
 
