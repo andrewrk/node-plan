@@ -15,6 +15,7 @@ Here are some examples:
  * [s3-upload](https://github.com/superjoe30/node-plan-s3-upload)
  * [s3-download](https://github.com/superjoe30/node-plan-s3-download)
  * [thumbnail](https://github.com/superjoe30/node-plan-thumbnail)
+ * [transcode](https://github.com/superjoe30/node-plan-transcode)
 
 ### Execute a plan
 
