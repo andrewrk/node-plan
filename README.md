@@ -31,7 +31,7 @@ plan.on('progress', function(amountDone, amountTotal) {
   console.log("progress", amountDone, amountTotal);
 });
 plan.on('update', function(task) {
-  console.log("update", task.info);
+  console.log("update", task.exports);
 });
 plan.on('end', function() {
   console.log("done");
