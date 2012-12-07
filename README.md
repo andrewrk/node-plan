@@ -88,16 +88,79 @@ plan.start(context);
 
 ## Documentation
 
-### Creating a Task
+### Creating a Task Definition
+
+```js
+var TaskDefinition = {};
+```
+
+#### start
+
+```js
+TaskDefinition.start = function(done) {
+  ...
+};
+```
+
+`start` is your main entry point. When you are finished processing, call 
+`done`. In this scope, `this` points to the task instance.
 
 #### context
 
+`context` acts as your input as well as your output. Sometimes it makes
+sense to delete the parameter that you are using; sometimes it does not.
+
+Access `context` via `this.context` in the `start` function.
+
+#### exports
+
+`exports` is output that is tied to the task instance and is not passed to
+the next task in the dependency graph.
+
+There are some special fields on `exports` that you should be wary of:
+
+Fields you should write to:
+
+ * `exports.amountTotal` - as soon as you find out how long executing this
+   task is going to take, set `amountTotal`. If the task is unable to emit
+   progress, node-plan will guess based on previous statistics.
+ * `exports.amountDone` - this number will change based on progress whereas
+   `amountTotal` should not.
+
+Whenever you update `amountDone` or `amountTotal`, you should emit a
+`progress` event: `this.emit('progress')`. Don't worry about emitting
+an `update` event for this case.
+
+Fields you should not write to:
+
+ * `exports.startDate` - the date the task instance started
+ * `exports.endDate` - the date the task instance completed
+ * `exports.state` - one of ['queued', 'processing', 'complete']
+
+You are free to add as many other `exports` fields as you wish.
+
+Whenever you change something in `exports`, you should emit a `update`
+event: `this.emit('update')`.
+
+Access `exports` via `this.exports` in the `start` function.
+
 #### options
 
-#### emitting update events
+`options` are per-task-instance configuration values. It is the third
+parameter of `Plan.createTask(definition, key, options)`.
 
-#### emitting progress events
+Access `options` via `this.options` in the `start` function.
 
 #### CPU Bound Tasks
+
+If your task spawns a CPU-intensive process and waits for it to complete,
+you should mark your task as `cpuBound`:
+
+```js
+TaskDefinition.cpuBound = true;
+```
+
+node-plan pools all `cpuBound` tasks, defaulting to a worker count equal
+to the number of CPU cores on your machine.
 
 ### Executing a Plan
