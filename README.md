@@ -43,7 +43,7 @@ var previewTask = Plan.createTask(TranscodeTask, "preview", {
   format: 'mp3'
 });
 var uploadWaveformTask = Plan.createTask(UploadS3Task, "upload-waveform", {
-  url: "$uuid/waveform$ext"
+  url: "/{uuid}/waveform{ext}"
   s3Key: '...',
   s3Bucket: '...',
   s3Secret: '...',
