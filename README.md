@@ -54,7 +54,13 @@ var uploadPreviewTask = Plan.createTask(UploadS3Task, "upload-preview", {
   s3Secret: '...',
 })
 
-var plan = new Plan();
+// planId is used to index progress statistics. Same with the 2nd parameter
+// to `Plan.createTask` above. Next time we run the same planId, node-plan
+// uses the gathered stats to inform the progress events, so that they will
+// be much more accurate and smooth.
+var planId = "process-audio";
+
+var plan = new Plan(planId);
 plan.addTask(uploadPreviewTask);
 plan.addDependency(uploadPreviewTask, previewTask);
 plan.addDependency(previewTask, downloadTask);
