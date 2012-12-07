@@ -19,11 +19,48 @@ Here are some examples:
 
 ### Execute a plan
 
+In this example, we will download a song from s3, generate a waveform image
+and preview audio, and upload each generated thing to s3, all the while
+reporting smooth and accurate processing progress to the end user.
+
 ```js
-var Plan = require('plan');
+var Plan = require('plan')
+  , WaveformTask = require('plan-waveform')
+  , TranscodeTask = require('plan-transcode')
+  , UploadS3Task = require('plan-s3-upload')
+  , DownloadS3Task = require('plan-s3-download')
+
+var downloadTask = Plan.createTask(DownloadS3Task, "download", {
+  s3Key: '...',
+  s3Bucket: '...',
+  s3Secret: '...',
+})
+var waveformTask = Plan.createTask(WaveformTask, "waveform", {
+  width: 1000,
+  height: 200,
+});
+var previewTask = Plan.createTask(TranscodeTask, "preview", {
+  format: 'mp3'
+});
+var uploadWaveformTask = Plan.createTask(UploadS3Task, "upload-waveform", {
+  url: "$uuid/waveform$ext"
+  s3Key: '...',
+  s3Bucket: '...',
+  s3Secret: '...',
+})
+var uploadPreviewTask = Plan.createTask(UploadS3Task, "upload-preview", {
+  s3Key: '...',
+  s3Bucket: '...',
+  s3Secret: '...',
+})
+
 var plan = new Plan();
-plan.addTask(task);
-plan.addDependency(task, task2);
+plan.addTask(uploadPreviewTask);
+plan.addDependency(uploadPreviewTask, previewTask);
+plan.addDependency(previewTask, downloadTask);
+plan.addTask(uploadWaveformTask);
+plan.addDependency(uploadWaveformTask, waveformTask);
+plan.addDependency(waveformTask, downloadTask);
 plan.on('error', function(err) {
   console.log("error:", err);
 });
@@ -36,7 +73,10 @@ plan.on('update', function(task) {
 plan.on('end', function() {
   console.log("done");
 });
-context = {blah: "foo"};
+context = {
+  s3Url: '/the/file/to/download',
+  makeTemp: require('temp').path
+};
 plan.start(context);
 ```
 
