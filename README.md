@@ -150,7 +150,7 @@ Access `exports` via `this.exports` in the `start` function.
 #### options
 
 `options` are per-task-instance configuration values. It is the third
-parameter of `Plan.createTask(definition, key, options)`.
+parameter of `Plan.createTask(definition, name, options)`.
 
 Access `options` via `this.options` in the `start` function.
 
@@ -167,3 +167,52 @@ node-plan pools all `cpuBound` tasks, defaulting to a worker count equal
 to the number of CPU cores on your machine.
 
 ### Executing a Plan
+
+#### new Plan(planId)
+
+`planId` is used for the progress heuristics. when you're building a
+similar plan, use the same `planId` and progress events will use
+past statistics for accuracy and smoothness.
+
+#### Plan.setWorkerCap(count)
+
+Set this to limit the number of simultaneous CPU-bound tasks.
+
+#### Plan.createTask(definition, name, options)
+
+ * `definition` - task definition described above
+ * `name` - a string, used to store statistics data. If you're doing a similar
+   task, use the same name.
+ * `options` - an object which is passed to the task instance to configure it
+
+#### Plan.prototype.addTask(task)
+
+This adds a root node to the dependency graph. If you imagine a tree, where
+the plan instance itself is the root node, `addTask` adds a task to the root node.
+
+#### Plan.prototype.addDependency(targetTask, dependencyTask)
+
+This is how you specify dependencies. `dependencyTask` becomes a leaf node of
+`targetTask`.
+
+#### Plan.prototype.start(context)
+
+Executes the plan. `context` is cloned and passed to all leaf nodes. Task
+instances modify `context` and pass a clone to the next task in the tree.
+
+#### Plan 'end' event (context)
+
+The plan has completed executing successfully. `context` is a merged result
+object of the tasks that were added with `addTask`.
+
+#### Plan 'error' event (err)
+
+One or more tasks returned an error. `err` is the error object.
+
+#### Plan 'progress' event (amountDone, amountTotal)
+
+Tells you how far along the execution of the plan is.
+
+#### Plan 'update' event
+
+Occurs when a task instance's `exports` have updated.
