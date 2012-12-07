@@ -105,6 +105,9 @@ TaskDefinition.start = function(done) {
 `start` is your main entry point. When you are finished processing, call 
 `done`. In this scope, `this` points to the task instance.
 
+If your task encounters an error, call done with the error object as
+the first parameter.
+
 #### context
 
 `context` acts as your input as well as your output. Sometimes it makes
