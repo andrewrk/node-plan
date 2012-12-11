@@ -183,15 +183,17 @@ describe("plan", function() {
     plan.addTask(errorTask);
     plan.addDependency(errorTask, fastTask);
     plan.addDependency(fastTask, smoothTask);
+    var hadError = false;
     plan.on('error', function(err) {
       assert.ok(err.isErrorTask);
       assert.strictEqual(fastTask.exports.derp, "hi");
       assert.strictEqual(fastTask.exports.complete, true);
       assert.strictEqual(smoothTask.exports.complete, true);
-      done();
+      hadError = true;
     });
     plan.on('end', function() {
-      assert.fail("not supposed to reach end");
+      assert.ok(hadError);
+      done();
     });
     plan.start();
   });
