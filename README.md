@@ -138,7 +138,13 @@ Fields you should not write to:
 
  * `exports.startDate` - the date the task instance started
  * `exports.endDate` - the date the task instance completed
- * `exports.state` - one of ['queued', 'processing', 'complete']
+ * `exports.state` - one of ['queued', 'skipped', 'processing', 'complete']
+   * `queued` - this task has not yet been started
+   * `skipped` - this task has been skipped, because one or more of its
+     dependencies emitted an error, and `ignoreDependencyErrors` is not 
+     set to `true`.
+   * `processing` - this task is currently in progress
+   * `complete` - this task has completed, possibly unsuccessfully.
 
 You are free to add as many other `exports` fields as you wish.
 
@@ -183,7 +189,11 @@ Set this to limit the number of simultaneous CPU-bound tasks.
  * `definition` - task definition described above
  * `name` - a string, used to store statistics data. If you're doing a similar
    task, use the same name.
- * `options` - an object which is passed to the task instance to configure it
+ * `options` - an object which is passed to the task instance to configure it.
+   In addition to the options which the task definition recognizes, all tasks
+   have these additional built-in options:
+   * `ignoreDependencyErrors` - if set to true, the task will execute even if
+     one or more of its dependencies did not suceed. default false.
 
 #### Plan.prototype.addTask(task)
 

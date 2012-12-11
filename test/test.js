@@ -59,6 +59,7 @@ var SyncTask = {
     this.context.foo = "foo2";
     this.context.tails = this.options.tails;
     this.exports.sonic = this.options.sonic || "zebra";
+    this.exports.complete = true;
     done();
   }
 };
@@ -182,15 +183,17 @@ describe("plan", function() {
     plan.addTask(errorTask);
     plan.addDependency(errorTask, fastTask);
     plan.addDependency(fastTask, smoothTask);
+    var hadError = false;
     plan.on('error', function(err) {
       assert.ok(err.isErrorTask);
       assert.strictEqual(fastTask.exports.derp, "hi");
       assert.strictEqual(fastTask.exports.complete, true);
       assert.strictEqual(smoothTask.exports.complete, true);
-      done();
+      hadError = true;
     });
     plan.on('end', function() {
-      assert.fail("not supposed to reach end");
+      assert.ok(hadError);
+      done();
     });
     plan.start();
   });
@@ -222,6 +225,42 @@ describe("plan", function() {
       done();
     });
     plan.start();
+  });
+  it("runs a task only once if it is depended on twice");
+  it("recognizes the ignoreDependencyErrors option", function(done) {
+    var optsIgnoreErrs = { ignoreDependencyErrors: true };
+    var plan = new Plan();
+    var syncTask = Plan.createTask(SyncTask, "sync");
+    var errorTask2 = Plan.createTask(ErrorTask, "error2");
+    var fastTask = Plan.createTask(FastTask, "fast", optsIgnoreErrs);
+    var smoothTask = Plan.createTask(SmoothTask, "smooth", optsIgnoreErrs);
+    var errorTask = Plan.createTask(ErrorTask, "error");
+    plan.addTask(syncTask);
+    plan.addDependency(syncTask, errorTask2);
+    plan.addDependency(errorTask2, fastTask);
+    plan.addDependency(fastTask, smoothTask);
+    plan.addDependency(smoothTask, errorTask);
+    var errorEventCount = 0;
+    plan.on('error', function(err, task) {
+      assert.ok(err.isErrorTask);
+      errorEventCount += 1;
+      if (errorEventCount === 1) {
+        assert.strictEqual(task, errorTask);
+      } else {
+        assert.strictEqual(task, errorTask2);
+      }
+    });
+    plan.on('end', function(results) {
+      // fast and smooth should have run
+      assert.ok(fastTask.exports.complete);
+      assert.ok(smoothTask.exports.complete);
+      // sync should not have run
+      assert.ok(!syncTask.exports.complete);
+      // error should have been emitted
+      assert.strictEqual(errorEventCount, 2);
+      done();
+    });
+    plan.start({eggman: "no"});
   });
   it("has smooth progress on 2nd try with tasks that do not emit progress", function(done) {
     this.timeout(12000);
