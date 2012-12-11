@@ -67,8 +67,8 @@ plan.addDependency(previewTask, downloadTask);
 plan.addTask(uploadWaveformTask);
 plan.addDependency(uploadWaveformTask, waveformTask);
 plan.addDependency(waveformTask, downloadTask);
-plan.on('error', function(err) {
-  console.log("error:", err);
+plan.on('error', function(err, task) {
+  console.log("task", task.name, "error", err);
 });
 plan.on('progress', function(amountDone, amountTotal) {
   console.log("progress", amountDone, amountTotal);
@@ -76,10 +76,10 @@ plan.on('progress', function(amountDone, amountTotal) {
 plan.on('update', function(task) {
   console.log("update", task.exports);
 });
-plan.on('end', function() {
-  console.log("done");
+plan.on('end', function(context) {
+  console.log("done", context);
 });
-context = {
+var context = {
   s3Url: '/the/file/to/download',
   makeTemp: require('temp').path
 };
