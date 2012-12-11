@@ -183,7 +183,11 @@ Set this to limit the number of simultaneous CPU-bound tasks.
  * `definition` - task definition described above
  * `name` - a string, used to store statistics data. If you're doing a similar
    task, use the same name.
- * `options` - an object which is passed to the task instance to configure it
+ * `options` - an object which is passed to the task instance to configure it.
+   In addition to the options which the task definition recognizes, all tasks
+   have these additional built-in options:
+   * `ignoreDependencyErrors` - if set to true, the task will execute even if
+     one or more of its dependencies did not suceed. default false.
 
 #### Plan.prototype.addTask(task)
 

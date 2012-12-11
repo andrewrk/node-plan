@@ -59,6 +59,7 @@ var SyncTask = {
     this.context.foo = "foo2";
     this.context.tails = this.options.tails;
     this.exports.sonic = this.options.sonic || "zebra";
+    this.exports.complete = true;
     done();
   }
 };
@@ -222,6 +223,35 @@ describe("plan", function() {
       done();
     });
     plan.start();
+  });
+  it("recognizes the ignoreDependencyErrors option", function(done) {
+    var optsIgnoreErrs = { ignoreDependencyErrors: true };
+    var plan = new Plan();
+    var syncTask = Plan.createTask(SyncTask);
+    var fastTask = Plan.createTask(FastTask, "fast", optsIgnoreErrs);
+    var smoothTask = Plan.createTask(SmoothTask, "smooth", optsIgnoreErrs);
+    var errorTask = Plan.createTask(ErrorTask, "error");
+    plan.addTask(syncTask);
+    plan.addDependency(syncTask, fastTask);
+    plan.addDependency(fastTask, smoothTask);
+    plan.addDependency(smoothTask, errorTask);
+    var hadError = false;
+    plan.on('error', function(err, task) {
+      assert.ok(err.isErrorTask);
+      assert.strictEqual(task, errorTask);
+      hadError = true;
+    });
+    plan.on('end', function(results) {
+      // fast and smooth should have run
+      assert.ok(fastTask.exports.complete);
+      assert.ok(smoothTask.exports.complete);
+      // sync should not have run
+      assert.ok(!syncTask.exports.complete);
+      // error should have been emitted
+      assert.ok(hadError);
+      done();
+    });
+    plan.start({eggman: "no"});
   });
   it("has smooth progress on 2nd try with tasks that do not emit progress", function(done) {
     this.timeout(12000);
