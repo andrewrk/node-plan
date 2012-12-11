@@ -261,7 +261,7 @@ describe("plan", function() {
     });
     plan.start();
   });
-  it("recognizes the ignoreDependencyErrors option", function(done) {
+  it("recognizes the ignoreDependencyErrors option, case 1", function(done) {
     var optsIgnoreErrs = { ignoreDependencyErrors: true };
     var plan = new Plan();
     var syncTask = Plan.createTask(SyncTask, "sync");
@@ -292,6 +292,35 @@ describe("plan", function() {
       assert.ok(!syncTask.exports.complete);
       // error should have been emitted
       assert.strictEqual(errorEventCount, 2);
+      done();
+    });
+    plan.start({eggman: "no"});
+  });
+  it("recognizes the ignoreDependencyErrors option, case 2", function(done) {
+    var optsIgnoreErrs = { ignoreDependencyErrors: true };
+    var plan = new Plan();
+    var syncTask = Plan.createTask(SyncTask, "sync", optsIgnoreErrs);
+    var fastTask = Plan.createTask(FastTask, "fast");
+    var smoothTask = Plan.createTask(SmoothTask, "smooth");
+    var errorTask = Plan.createTask(ErrorTask, "error");
+    plan.addTask(syncTask);
+    plan.addDependency(syncTask, fastTask);
+    plan.addDependency(fastTask, smoothTask);
+    plan.addDependency(smoothTask, errorTask);
+    var errorEventCount = 0;
+    plan.on('error', function(err, task) {
+      assert.ok(err.isErrorTask);
+      errorEventCount += 1;
+      assert.strictEqual(task, errorTask);
+    });
+    plan.on('end', function(results) {
+      // fast and smooth should not have run
+      assert.ok(!fastTask.exports.complete);
+      assert.ok(!smoothTask.exports.complete);
+      // sync should have run
+      assert.ok(syncTask.exports.complete);
+      // error should have been emitted
+      assert.strictEqual(errorEventCount, 1);
       done();
     });
     plan.start({eggman: "no"});
