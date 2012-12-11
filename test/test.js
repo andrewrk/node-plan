@@ -97,6 +97,25 @@ var SumTask = {
   }
 };
 
+var counterTaskCounter = 0;
+var CounterTask = {
+  start: function(done) {
+    var self = this;
+    counterTaskCounter += 1;
+    self.exports.amountTotal = 30;
+    var interval = setInterval(function() {
+      self.exports.amountDone += 1;
+      if (self.exports.amountDone === 30) {
+        clearInterval(interval);
+        self.exports.complete = true;
+        done();
+      } else {
+        self.emit('progress');
+      }
+    }, 10);
+  }
+};
+
 var CpuTask = {
   cpuBound: true,
   start: function(done) {
@@ -226,7 +245,22 @@ describe("plan", function() {
     });
     plan.start();
   });
-  it("runs a task only once if it is depended on twice");
+  it("runs a task only once if it is depended on twice", function(done) {
+    var plan = new Plan();
+    var counterTask = Plan.createTask(CounterTask);
+    var fastTask = Plan.createTask(FastTask);
+    var smoothTask = Plan.createTask(SmoothTask);
+    plan.addTask(fastTask);
+    plan.addTask(smoothTask);
+    plan.addDependency(fastTask, counterTask);
+    plan.addDependency(smoothTask, counterTask);
+    plan.on('error', done);
+    plan.on('end', function() {
+      assert.strictEqual(counterTaskCounter, 1);
+      done();
+    });
+    plan.start();
+  });
   it("recognizes the ignoreDependencyErrors option", function(done) {
     var optsIgnoreErrs = { ignoreDependencyErrors: true };
     var plan = new Plan();
