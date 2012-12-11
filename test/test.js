@@ -224,22 +224,29 @@ describe("plan", function() {
     });
     plan.start();
   });
+  it("runs a task only once if it is depended on twice");
   it("recognizes the ignoreDependencyErrors option", function(done) {
     var optsIgnoreErrs = { ignoreDependencyErrors: true };
     var plan = new Plan();
-    var syncTask = Plan.createTask(SyncTask);
+    var syncTask = Plan.createTask(SyncTask, "sync");
+    var errorTask2 = Plan.createTask(ErrorTask, "error2");
     var fastTask = Plan.createTask(FastTask, "fast", optsIgnoreErrs);
     var smoothTask = Plan.createTask(SmoothTask, "smooth", optsIgnoreErrs);
     var errorTask = Plan.createTask(ErrorTask, "error");
     plan.addTask(syncTask);
-    plan.addDependency(syncTask, fastTask);
+    plan.addDependency(syncTask, errorTask2);
+    plan.addDependency(errorTask2, fastTask);
     plan.addDependency(fastTask, smoothTask);
     plan.addDependency(smoothTask, errorTask);
-    var hadError = false;
+    var errorEventCount = 0;
     plan.on('error', function(err, task) {
       assert.ok(err.isErrorTask);
-      assert.strictEqual(task, errorTask);
-      hadError = true;
+      errorEventCount += 1;
+      if (errorEventCount === 1) {
+        assert.strictEqual(task, errorTask);
+      } else {
+        assert.strictEqual(task, errorTask2);
+      }
     });
     plan.on('end', function(results) {
       // fast and smooth should have run
@@ -248,7 +255,7 @@ describe("plan", function() {
       // sync should not have run
       assert.ok(!syncTask.exports.complete);
       // error should have been emitted
-      assert.ok(hadError);
+      assert.strictEqual(errorEventCount, 2);
       done();
     });
     plan.start({eggman: "no"});

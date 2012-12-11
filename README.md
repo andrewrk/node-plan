@@ -138,7 +138,13 @@ Fields you should not write to:
 
  * `exports.startDate` - the date the task instance started
  * `exports.endDate` - the date the task instance completed
- * `exports.state` - one of ['queued', 'processing', 'complete']
+ * `exports.state` - one of ['queued', 'skipped', 'processing', 'complete']
+   * `queued` - this task has not yet been started
+   * `skipped` - this task has been skipped, because one or more of its
+     dependencies emitted an error, and `ignoreDependencyErrors` is not 
+     set to `true`.
+   * `processing` - this task is currently in progress
+   * `complete` - this task has completed, possibly unsuccessfully.
 
 You are free to add as many other `exports` fields as you wish.
 
