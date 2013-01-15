@@ -86,6 +86,13 @@ var context = {
 plan.start(context);
 ```
 
+### What would I use this for?
+
+Creating a service such as [TransloadIt](https://transloadit.com/).
+
+[Mediablast](https://github.com/superjoe30/mediablast) is an open source
+service such as this running on node-plan.
+
 ## Documentation
 
 ### Creating a Task Definition
