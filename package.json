@@ -1,6 +1,6 @@
 {
   "name": "plan",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "execute a complicated dependency graph of tasks with smooth progress events",
   "main": "lib/plan.js",
   "scripts": {
